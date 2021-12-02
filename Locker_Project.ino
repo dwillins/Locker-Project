@@ -1,7 +1,7 @@
 // Code for modular locker project. Written by Daniel Willins, class of 22
 #include <Servo.h>
 
-const byte numLockers = 1;
+const byte numLockers = 4;
 byte i;
 
 String input = "";
@@ -9,9 +9,11 @@ String input = "";
 Servo A, B, C, D;
 
 // creates lists of the servos, their states, and their passwords
-Servo locks [numLockers] = {A};
-bool isOccupied [numLockers] = {false};
-String Ids [numLockers] = {""};
+Servo locks [numLockers] = {A, B, C, D};
+bool isOccupied [numLockers] = {false, false, false, false};
+String Ids [numLockers] = {"", "", "", ""};
+// frist pin is green, second is red
+byte ledPins[numLockers][2] = {{9, 8}, {7, 6}, {5, 4}, {3,2}};
 
 void setup(){
 	Serial.begin(9600);
@@ -24,9 +26,18 @@ void setup(){
 	B.write(0);
 	C.write(0);
 	D.write(0);
+
+  for (i = 0; i < numLockers; i++) {
+    pinMode(i,OUTPUT);
+  }
 }
   
 void loop(){
+  // designates the first empty locker for use
+  for (i = 0; i < numLockers; i++) {
+    digitalWrite(ledPins[i][0], HIGH);  
+  }
+  
   // gets the rfid as one string
   while (input.length() < 30) {
     if (Serial.available() > 0) {
@@ -62,6 +73,8 @@ void closeLock(int index){
   isOccupied[index] = true;
   Ids[index] = input;
   input = "";
+  digitalWrite(ledPins[index][1], HIGH);
+  digitalWrite(ledPins[index][0], LOW);
 }
 
 void openLock(int index){
@@ -71,4 +84,5 @@ void openLock(int index){
 	isOccupied[index] = false;
   Ids[index] = ""; 
   input = "";
+  digitalWrite(ledPins[index][1], LOW);
 }
