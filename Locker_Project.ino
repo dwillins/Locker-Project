@@ -1,47 +1,95 @@
-// Code for modular locker project. Written by Daniel Willins, class of 22
-// test
+/ Code for modular locker project. Made with <3 by Daniel Willins, class of 22
 #include <Servo.h>
 
+// creates a subclass of Servo that includes state data for each locker  
+class Locker : public Servo {
+  public:
+    boolean isOccupied;
+    boolean mirror;
+    String password; 
+    char symbol;
+    byte greenPin;
+    byte redPin;
+    
+    Locker (boolean full, boolean swapped, String id, char letter, byte green, byte red) {
+      isOccupied = full;
+      mirror = swapped;
+      password = id;
+      symbol = letter;
+      greenPin = green;
+      redPin = red;
+    }
+  
+  void closeLock(String input){
+    Serial.println("closing locker : " + symbol);
+    // the servo is locked, the state is set to full and the password is set
+    write(90);
+    isOccupied = true;
+    password = input;
+    digitalWrite(redPin, HIGH);
+    digitalWrite(greenPin, LOW);
+  }
+
+  void openLock(){
+    Serial.println("opening locker : " + symbol);
+    // the servo is unlocked, the state is set to empty and the password is cleared
+    write(mirror ? 180 : 0);
+    isOccupied = false;
+    password = "";
+    digitalWrite(redPin, LOW);
+  }
+};
+
+String input;
 const byte numLockers = 4;
-byte i;
 
-String input = "";
+const byte redA = 9;
+const byte greenA = 8;
+const byte redB = 7;
+const byte greenB = 6;
+const byte redC = 5;
+const byte greenC = 4;
+const byte redD = 3;
+const byte greenD = 2;
 
-Servo A, B, C, D;
-
-// creates lists of the servos, their states, and their passwords
-Servo locks [numLockers] = {A, B, C, D};
-bool isOccupied [numLockers] = {false, false, false, false};
-String Ids [numLockers] = {"", "", "", ""};
-// frist pin is green, second is red
-byte ledPins[numLockers][2] = {{9, 8}, {7, 6}, {5, 4}, {3,2}};
+Locker A(false, false, "", 'A', greenA, redA); 
+Locker B(false, true, "", 'B', greenB, redB); 
+Locker C(false, true, "", 'C', greenC, redC); 
+Locker D(false, false, "", 'D', greenD, redD); 
+  
+Locker lockers [numLockers] = {A, B, C, D};
+Locker * designated;
 
 void setup(){
-	Serial.begin(9600);
-	// creates the servos and makes them stay in place
-	A.attach(13);
-	B.attach(12);
-	C.attach(11);
-	D.attach(10);
-	A.write(0);
-	B.write(0);
-	C.write(0);
-	D.write(0);
+  Serial.begin(9600);  
 
-  for (i = 2; i < 10; i++) {
-    pinMode(i,OUTPUT);
+  // pinout for servos and LEDs
+  A.attach(13);
+  B.attach(12);
+  C.attach(11);
+  D.attach(10);
+
+  for (Locker locker : lockers){
+    pinMode(locker.greenPin, OUTPUT);
+    pinMode(locker.redPin, OUTPUT);
+  }
+  
+  // unlocks all servos 
+  for (Locker locker : lockers){
+    locker.write(locker.mirror ? 180 : 0);
   }
 }
-  
+
 void loop(){
-  // designates the first empty locker for use
-  for (i = 0; i < numLockers; i++) {
-    if (!isOccupied[i]) {
-      digitalWrite(ledPins[i][0],HIGH);
-      break;
-    }  
+  //designates a locker and lights it
+  for (Locker locker : lockers) {
+    if (!locker.isOccupied){
+      designated = &locker;
+      digitalWrite(designated->greenPin, HIGH);
+    }
   }
   
+  input = "";
   // gets the rfid as one string
   while (input.length() < 30) {
     if (Serial.available() > 0) {
@@ -51,42 +99,16 @@ void loop(){
   }
   
   Serial.println(input);
+  
   // iterates through the lockers, if one has the matching password, opens it
-  for (i = 0; i < numLockers; i++){
-    if (input.equals(Ids[i])) {
-      openLock(i);
-      //breaks the loop and returns to the start
-  	  return;
+  for (Locker locker : lockers) {
+    if (input.equals(locker.password)) {
+      locker.openLock();
+      // restarts void loop() so the designated locker will not be closed
+      return;
     } 
   }
   
-  // iterates through the lockers and reserves the first available one
-  for (i = 0; i < numLockers; i++) {
-    if (!isOccupied[i]){
-      closeLock(i);
-      //breaks the loop and returns to the start
-      return;
-    }
-  }
-}
-
-void closeLock(int index){
-  Serial.print("closing locker : ");
-  Serial.println(index + 1);
-  locks[index].write(90);
-  isOccupied[index] = true;
-  Ids[index] = input;
-  input = "";
-  digitalWrite(ledPins[index][1], HIGH);
-  digitalWrite(ledPins[index][0], LOW);
-}
-
-void openLock(int index){
-  Serial.print("opening locker : ");
-  Serial.println(index + 1);
-	locks[index].write(0);
-	isOccupied[index] = false;
-  Ids[index] = ""; 
-  input = "";
-  digitalWrite(ledPins[index][1], LOW);
+  // if no locker matches the password, closes the designated locker
+  designated->closeLock(input);
 }
