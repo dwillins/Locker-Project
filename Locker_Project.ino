@@ -27,7 +27,7 @@ void setup(){
 	C.write(0);
 	D.write(0);
 
-  for (i = 0; i < numLockers; i++) {
+  for (i = 2; i < 10; i++) {
     pinMode(i,OUTPUT);
   }
 }
@@ -35,7 +35,10 @@ void setup(){
 void loop(){
   // designates the first empty locker for use
   for (i = 0; i < numLockers; i++) {
-    digitalWrite(ledPins[i][0], HIGH);  
+    if (!isOccupied[i]) {
+      digitalWrite(ledPins[i][0],HIGH);
+      break;
+    }  
   }
   
   // gets the rfid as one string
