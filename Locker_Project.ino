@@ -1,4 +1,4 @@
-/ Code for modular locker project. Made with <3 by Daniel Willins, class of 22
+// Code for modular locker project. Made with <3 by Daniel Willins, class of 22
 #include <Servo.h>
 
 // creates a subclass of Servo that includes state data for each locker  
@@ -7,11 +7,11 @@ class Locker : public Servo {
     boolean isOccupied;
     boolean mirror;
     String password; 
-    char symbol;
+    String symbol;
     byte greenPin;
     byte redPin;
     
-    Locker (boolean full, boolean swapped, String id, char letter, byte green, byte red) {
+    Locker (boolean full, boolean swapped, String id, String letter, byte green, byte red) {
       isOccupied = full;
       mirror = swapped;
       password = id;
@@ -52,10 +52,10 @@ const byte greenC = 4;
 const byte redD = 3;
 const byte greenD = 2;
 
-Locker A(false, false, "", 'A', greenA, redA); 
-Locker B(false, true, "", 'B', greenB, redB); 
-Locker C(false, true, "", 'C', greenC, redC); 
-Locker D(false, false, "", 'D', greenD, redD); 
+Locker A(false, false, "", "A", greenA, redA); 
+Locker B(false, true, "", "B", greenB, redB); 
+Locker C(false, true, "", "C", greenC, redC); 
+Locker D(false, false, "", "D", greenD, redD); 
   
 Locker lockers [numLockers] = {A, B, C, D};
 Locker * designated;
