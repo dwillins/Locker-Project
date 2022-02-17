@@ -86,6 +86,8 @@ void loop(){
     if (!locker.isOccupied){
       designated = &locker;
       digitalWrite(designated->greenPin, HIGH);
+      Serial.println("designating locker: " + locker.symbol);
+      break;
     }
   }
   
