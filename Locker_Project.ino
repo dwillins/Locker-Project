@@ -1,4 +1,4 @@
-// Code for modular locker project. Written by Daniel Willins, class of 22
+// Code for modular locker project. Made with <3 by Daniel Willins, class of 22
 #include <Servo.h>
 
 const byte numLockers = 4;
@@ -11,6 +11,7 @@ Servo A, B, C, D;
 // creates lists of the servos, their states, and their passwords
 Servo locks [numLockers] = {A, B, C, D};
 bool isOccupied [numLockers] = {false, false, false, false};
+bool mirrored [numLockers] = {false, true, true, false};
 String Ids [numLockers] = {"", "", "", ""};
 // frist pin is green, second is red
 byte ledPins[numLockers][2] = {{9, 8}, {7, 6}, {5, 4}, {3,2}};
@@ -23,8 +24,8 @@ void setup(){
 	C.attach(11);
 	D.attach(10);
 	A.write(0);
-	B.write(0);
-	C.write(0);
+	B.write(180);
+	C.write(180);
 	D.write(0);
 
   for (i = 2; i < 10; i++) {
@@ -83,7 +84,7 @@ void closeLock(int index){
 void openLock(int index){
   Serial.print("opening locker : ");
   Serial.println(index + 1);
-	locks[index].write(0);
+	locks[index].write(mirrored[index] ? 180 : 0);
 	isOccupied[index] = false;
   Ids[index] = ""; 
   input = "";
