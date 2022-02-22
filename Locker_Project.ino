@@ -12,12 +12,12 @@ class Locker : public Servo {
     byte redPin;
     
     Locker (boolean full, String id, boolean swapped, String letter, byte green, byte red) {
-      isOccupied = full;
-      password = id;
-      mirror = swapped;
-      symbol = letter;
-      greenPin = green;
-      redPin = red;
+      this->isOccupied = full;
+      this->password = id;
+      this->mirror = swapped;
+      this->symbol = letter;
+      this->greenPin = green;
+      this->redPin = red;
     }
   boolean getIsOccupied() {
     return isOccupied;
@@ -73,43 +73,43 @@ const byte greenC = 4;
 const byte redD = 3;
 const byte greenD = 2;
 
-Locker A(false, "", false, "A", greenA, redA); 
-Locker B(false, "", true, "B", greenB, redB); 
-Locker C(false, "", true, "C", greenC, redC); 
-Locker D(false, "", false, "D", greenD, redD); 
+Locker *A = new Locker(false, "", false, "A", greenA, redA); 
+Locker *B = new Locker(false, "", true, "B", greenB, redB); 
+Locker *C = new Locker(false, "", true, "C", greenC, redC); 
+Locker *D = new Locker(false, "", false, "D", greenD, redD); 
   
-Locker lockers [numLockers] = {A, B, C, D};
+Locker *lockers [numLockers] = {A, B, C, D};
 byte designatedNum;
 
 void setup(){
   Serial.begin(9600);  
 
   // pinout for servos and LEDs
-  A.attach(13);
-  B.attach(12);
-  C.attach(11);
-  D.attach(10);
+  A->attach(13);
+  B->attach(12);
+  C->attach(11);
+  D->attach(10);
 
-  for (Locker locker : lockers){
-    pinMode(locker.greenPin, OUTPUT);
-    pinMode(locker.redPin, OUTPUT);
+  for (Locker *locker : lockers){
+    pinMode(locker->greenPin, OUTPUT);
+    pinMode(locker->redPin, OUTPUT);
   }
   
   // unlocks all servos 
-  for (Locker locker : lockers){
-    locker.write(locker.mirror ? 180 : 0);
+  for (Locker *locker : lockers){
+    locker->write(locker->mirror ? 180 : 0);
   }
   Serial.println("lockers unlocked");
 }
 
 void loop(){
   //designates a locker and lights it
-  for(int i = 0; i < 4; i++) {
-    lockers[i].checkStatus();
-    if (!lockers[i].getIsOccupied()) {
+  for(int i = 0; i < numLockers; i++) {
+    lockers[i]->checkStatus();
+    if (!lockers[i]->getIsOccupied()) {
       designatedNum = i;
-      Serial.println("designated locker: " + lockers[designatedNum].symbol);
-      digitalWrite(lockers[designatedNum].greenPin, HIGH);
+      Serial.println("designated locker: " + lockers[designatedNum]->symbol);
+      digitalWrite(lockers[designatedNum]->greenPin, HIGH);
       break;
     }
   }
@@ -128,10 +128,10 @@ void loop(){
   Serial.println(input);
   
   // iterates through the lockers, if one has the matching password, opens it
-  for (Locker locker : lockers) {
-    if (locker.getPassword().equals(input)) {
+  for (Locker *locker : lockers) {
+    if (locker->getPassword().equals(input)) {
       Serial.println("password found");
-      locker.openLock();
+      locker->openLock();
       // restarts void loop() so the designated locker will not be closed
       return;
     } 
@@ -139,5 +139,5 @@ void loop(){
 
   Serial.println("password not found");
   // if no locker matches the password, closes the designated locker
-  lockers[designatedNum].closeLock(input);
+  lockers[designatedNum]->closeLock(input);
 }
