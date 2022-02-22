@@ -11,53 +11,32 @@ class Locker : public Servo {
     byte greenPin;
     byte redPin;
     
-    Locker (boolean full, String id, boolean swapped, String letter, byte green, byte red) {
-      this->isOccupied = full;
-      this->password = id;
-      this->mirror = swapped;
-      this->symbol = letter;
-      this->greenPin = green;
-      this->redPin = red;
+    Locker (boolean isOccupied, String password, boolean mirror, String symbol, byte greenPin, byte redPin) {
+      this->isOccupied = isOccupied;
+      this->password = password;
+      this->mirror = mirror;
+      this->symbol = symbol;
+      this->greenPin = greenPin;
+      this->redPin = redPin;
     }
-  boolean getIsOccupied() {
-    return isOccupied;
-  }
-  
-  String getPassword() {
-    return password;
-  }
-  
-  void setIsOccupied(boolean occupied){
-    isOccupied = occupied;
-  }
-  void setPassword(String rfid) {
-    password = rfid;
-  }
 
-  // debugging method that displays stored password and occupation
-  void checkStatus() {
-    Serial.println("Symbol: " + symbol + " password: " + getPassword() + " state: " + getIsOccupied());
-  }
-  
-  void closeLock(String code){
+  void closeLock(String password){
     // the servo is locked, the state is set to full and the password is set
     write(90);
-    setIsOccupied(true);
-    setPassword(code);
+    isOccupied =true;
+    this->password = password;
     digitalWrite(redPin, HIGH);
     digitalWrite(greenPin, LOW);
     Serial.println("closing locker: " + symbol);
-    checkStatus();
   }
 
   void openLock(){
     // the servo is unlocked, the state is set to empty and the password is cleared
     write(mirror ? 180 : 0);
-    setIsOccupied(false);
-    setPassword("");
+    isOccupied = false;
+    password = "";
     digitalWrite(redPin, LOW);
     Serial.println("opening locker: " + symbol);
-    checkStatus();
   }
 };
 
@@ -73,13 +52,16 @@ const byte greenC = 4;
 const byte redD = 3;
 const byte greenD = 2;
 
+// lockers must be pointers so they can be edited in an array
 Locker *A = new Locker(false, "", false, "A", greenA, redA); 
 Locker *B = new Locker(false, "", true, "B", greenB, redB); 
 Locker *C = new Locker(false, "", true, "C", greenC, redC); 
 Locker *D = new Locker(false, "", false, "D", greenD, redD); 
-  
+
+// Array of lockers to iterate through
 Locker *lockers [numLockers] = {A, B, C, D};
-byte designatedNum;
+// variable used to store designated locker
+Locker *designated;
 
 void setup(){
   Serial.begin(9600);  
@@ -99,45 +81,45 @@ void setup(){
   for (Locker *locker : lockers){
     locker->write(locker->mirror ? 180 : 0);
   }
-  Serial.println("lockers unlocked");
+  
+  Serial.println("locker initialized");
 }
 
 void loop(){
   //designates a locker and lights it
-  for(int i = 0; i < numLockers; i++) {
-    lockers[i]->checkStatus();
-    if (!lockers[i]->getIsOccupied()) {
-      designatedNum = i;
-      Serial.println("designated locker: " + lockers[designatedNum]->symbol);
-      digitalWrite(lockers[designatedNum]->greenPin, HIGH);
+  for(Locker *locker : lockers) {
+    if (!locker->isOccupied) {
+      designated = locker;
+      digitalWrite(designated->greenPin, HIGH);
+      Serial.println("designating locker: " + designated->symbol);
       break;
     }
   }
   
-  input = "";
   Serial.println();
+  
   // gets the rfid as one string
+  input = "";
   while (input.length() < 30) {
-    //Serial.println("waiting");
     if (Serial.available() > 0) {
       input += Serial.read();
       Serial.flush();
     }
   }
   
-  Serial.println(input);
+  Serial.println("Scan Result: " + input);
   
   // iterates through the lockers, if one has the matching password, opens it
   for (Locker *locker : lockers) {
-    if (locker->getPassword().equals(input)) {
-      Serial.println("password found");
+    if (locker->password.equals(input)) {
+      Serial.println("match found");
       locker->openLock();
       // restarts void loop() so the designated locker will not be closed
       return;
     } 
   }
 
-  Serial.println("password not found");
+  Serial.println("match not found");
   // if no locker matches the password, closes the designated locker
-  lockers[designatedNum]->closeLock(input);
+  designated->closeLock(input);
 }
