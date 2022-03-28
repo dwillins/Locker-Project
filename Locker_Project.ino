@@ -44,6 +44,8 @@ const byte pinB = 8;
 const byte pinC = 7;
 const byte pinD = 6;
 
+const String masterCards [2] = {"",""};
+
 // lockers must be pointers so they can be edited in an array
 Locker *A = new Locker(false, "", false, "A", pinA); 
 Locker *B = new Locker(false, "", true, "B", pinB); 
@@ -99,6 +101,16 @@ void loop(){
   }
   
   Serial.println("Scan Result: " + input);
+
+  for (int i = 0; i < 2; i++) {
+    if (input.equals(masterCards[i])) {
+      for (int i = 0; i < numLockers; i++) {
+        lockers[i]->openLock();
+      }
+    }
+    Serial.println("locks opened with master card: " + input);
+    return;
+  }
   
   // iterates through the lockers, if one has the matching password, opens it
   for (Locker *locker : lockers) {
