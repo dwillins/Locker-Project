@@ -8,25 +8,22 @@ class Locker : public Servo {
     String password;
     boolean mirror; 
     String symbol;
-    byte greenPin;
-    byte redPin;
+    byte ledPin;
     
-    Locker (boolean isOccupied, String password, boolean mirror, String symbol, byte greenPin, byte redPin) {
+    Locker (boolean isOccupied, String password, boolean mirror, String symbol, byte ledPin) {
       this->isOccupied = isOccupied;
       this->password = password;
       this->mirror = mirror;
       this->symbol = symbol;
-      this->greenPin = greenPin;
-      this->redPin = redPin;
+      this->ledPin = ledPin;
     }
-
+    
   void closeLock(String password){
     // the servo is locked, the state is set to full and the password is set
     write(90);
     isOccupied =true;
     this->password = password;
-    digitalWrite(redPin, HIGH);
-    digitalWrite(greenPin, LOW);
+    digitalWrite(ledPin, LOW);
     Serial.println("closing locker: " + symbol);
   }
 
@@ -35,28 +32,23 @@ class Locker : public Servo {
     write(mirror ? 180 : 0);
     isOccupied = false;
     password = "";
-    digitalWrite(redPin, LOW);
     Serial.println("opening locker: " + symbol);
   }
 };
 
 String input;
-const byte numLockers = 4;
+const static byte numLockers = 4;
 
-const byte redA = 9;
-const byte greenA = 8;
-const byte redB = 7;
-const byte greenB = 6;
-const byte redC = 5;
-const byte greenC = 4;
-const byte redD = 3;
-const byte greenD = 2;
+const byte pinA = 9;
+const byte pinB = 8;
+const byte pinC = 7;
+const byte pinD = 6;
 
 // lockers must be pointers so they can be edited in an array
-Locker *A = new Locker(false, "", false, "A", greenA, redA); 
-Locker *B = new Locker(false, "", true, "B", greenB, redB); 
-Locker *C = new Locker(false, "", true, "C", greenC, redC); 
-Locker *D = new Locker(false, "", false, "D", greenD, redD); 
+Locker *A = new Locker(false, "", false, "A", pinA); 
+Locker *B = new Locker(false, "", true, "B", pinB); 
+Locker *C = new Locker(false, "", true, "C", pinC); 
+Locker *D = new Locker(false, "", false, "D", pinD); 
 
 // Array of lockers to iterate through
 Locker *lockers [numLockers] = {A, B, C, D};
@@ -73,8 +65,7 @@ void setup(){
   D->attach(10);
 
   for (Locker *locker : lockers){
-    pinMode(locker->greenPin, OUTPUT);
-    pinMode(locker->redPin, OUTPUT);
+    pinMode(locker->ledPin, OUTPUT);
   }
   
   // unlocks all servos 
@@ -90,7 +81,7 @@ void loop(){
   for(Locker *locker : lockers) {
     if (!locker->isOccupied) {
       designated = locker;
-      digitalWrite(designated->greenPin, HIGH);
+      digitalWrite(designated->ledPin, HIGH);
       Serial.println("designating locker: " + designated->symbol);
       break;
     }
