@@ -21,7 +21,7 @@ class Locker : public Servo {
   void closeLock(String password){
     // the servo is locked, the state is set to full and the password is set
     write(90);
-    isOccupied =true;
+    isOccupied = true;
     this->password = password;
     digitalWrite(ledPin, LOW);
     Serial.println("closing locker: " + symbol);
@@ -111,10 +111,10 @@ void loop(){
   }
 
   // if no locker matches the password and the unit isn't full, closes the designated locker
+  Serial.println("match not found");
   if (A->isOccupied && B->isOccupied && C->isOccupied && D->isOccupied) {
-    Serial.println("unit full");
-  } else {
-    Serial.println("match not found");
+    Serial.print("unit full");
+  } else { 
     designated->closeLock(input);
   }
 }
