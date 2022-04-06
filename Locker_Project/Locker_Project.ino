@@ -77,6 +77,7 @@ void setup(){
 
 void loop(){
   // designates a locker and lights it
+  digitalWrite(designated->ledPin, LOW);
   for(Locker *locker : lockers) {
     if (!locker->isOccupied) {
       designated = locker;
