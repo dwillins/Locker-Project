@@ -4,15 +4,13 @@
 // creates a subclass of Servo that includes state data for each locker  
 class Locker : public Servo {
   public:
-    boolean isOccupied;
-    String password;
+    boolean isOccupied = false;
+    String password = "";
     boolean mirror; 
     String symbol;
     byte ledPin;
     
-    Locker (boolean isOccupied, String password, boolean mirror, String symbol, byte ledPin) {
-      this->isOccupied = isOccupied;
-      this->password = password;
+    Locker (boolean mirror, String symbol, byte ledPin) {
       this->mirror = mirror;
       this->symbol = symbol;
       this->ledPin = ledPin;
@@ -21,7 +19,7 @@ class Locker : public Servo {
   void closeLock(String password){
     // the servo is locked, the state is set to full and the password is set
     write(90);
-    isOccupied =true;
+    isOccupied = true;
     this->password = password;
     digitalWrite(ledPin, LOW);
     Serial.println("closing locker: " + symbol);
@@ -45,10 +43,10 @@ const byte pinC = 7;
 const byte pinD = 6;
 
 // lockers must be pointers so they can be edited in an array
-Locker *A = new Locker(false, "", false, "A", pinA); 
-Locker *B = new Locker(false, "", true, "B", pinB); 
-Locker *C = new Locker(false, "", true, "C", pinC); 
-Locker *D = new Locker(false, "", false, "D", pinD); 
+Locker *A = new Locker(false, "A", pinA); 
+Locker *B = new Locker(true, "B", pinB); 
+Locker *C = new Locker(true, "C", pinC); 
+Locker *D = new Locker(false, "D", pinD); 
 
 // Array of lockers to iterate through
 Locker *lockers [numLockers] = {A, B, C, D};
@@ -64,6 +62,7 @@ void setup(){
   C->attach(11);
   D->attach(10);
 
+  // sets all LED pins as digital outputs
   for (Locker *locker : lockers){
     pinMode(locker->ledPin, OUTPUT);
   }
@@ -77,7 +76,8 @@ void setup(){
 }
 
 void loop(){
-  //designates a locker and lights it
+  // designates a locker and lights it
+  digitalWrite(designated->ledPin, LOW);
   for(Locker *locker : lockers) {
     if (!locker->isOccupied) {
       designated = locker;
@@ -111,10 +111,23 @@ void loop(){
   }
 
   // if no locker matches the password and the unit isn't full, closes the designated locker
+  Serial.println("match not found");
   if (A->isOccupied && B->isOccupied && C->isOccupied && D->isOccupied) {
     Serial.println("unit full");
-  } else {
-    Serial.println("match not found");
+    blinkLeds();
+  } else { 
     designated->closeLock(input);
+  }
+}
+
+void blinkLeds() {
+  for (int i = 0; i < 5; i++) {
+    for (Locker *locker : lockers) {
+      digitalWrite(locker->ledPin, HIGH);
+    }
+    delay(100);
+    for (Locker *locker : lockers) {
+      digitalWrite(locker->ledPin, LOW);
+    }
   }
 }
